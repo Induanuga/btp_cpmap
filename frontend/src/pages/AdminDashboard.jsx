@@ -101,7 +101,7 @@ function UsersTab() {
                   <select
                     value={u.role}
                     onChange={(e) => handleRoleChange(u._id, e.target.value)}
-                    disabled={u._id === currentUser?.id}
+                    disabled={u._id === currentUser?.id || u.role === 'admin'}
                     style={{
                       background: ROLE_COLORS[u.role] + '22',
                       color: ROLE_COLORS[u.role],
@@ -110,7 +110,7 @@ function UsersTab() {
                       fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
                     }}
                   >
-                    {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                    {ROLES.filter((r) => r !== 'admin' || u.role === 'admin').map((r) => <option key={r} value={r}>{r}</option>)}
                   </select>
                 </td>
                 <td style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)' }}>

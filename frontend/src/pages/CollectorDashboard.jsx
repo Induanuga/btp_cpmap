@@ -19,10 +19,10 @@ const emptyTransition = () => ({
   fromStage: '', toStage: '', optionsAvailable: '', reasonChosen: '', mistakes: '', advice: '',
 });
 
-function TagInput({ value, onChange, placeholder }) {
+function TagInput({ value, onChange, placeholder, index = 0 }) {
   const tags = value ? value.split(',').map((s) => s.trim()).filter(Boolean) : [];
   const [input, setInput] = useState('');
-  const id = `tag-col-${placeholder.replace(/\s/g, '-')}`;
+  const id = `tag-col-${index}-${placeholder.replace(/\s+/g, '-')}`;
   const addTag = (v) => {
     const t = v.trim();
     if (t) onChange([...tags, t].join(', '));
@@ -249,7 +249,7 @@ export default function CollectorDashboard() {
                 </div>
                 <div className="form-group stage-block-full">
                   <label className="form-label">Skills Gained</label>
-                  <TagInput value={stage.skills} onChange={(v) => updateStage(i, 'skills', v)}
+                  <TagInput value={stage.skills} onChange={(v) => updateStage(i, 'skills', v)} index={i}
                     placeholder="e.g., Java, Patient Care, Tax Filing..." />
                 </div>
                 <div className="form-group stage-block-full">
@@ -297,7 +297,7 @@ export default function CollectorDashboard() {
                 </div>
                 <div className="form-group cpform-grid-full">
                   <label className="form-label">Options Available</label>
-                  <TagInput value={tr.optionsAvailable} onChange={(v) => updateTransition(i, 'optionsAvailable', v)}
+                  <TagInput value={tr.optionsAvailable} onChange={(v) => updateTransition(i, 'optionsAvailable', v)} index={i}
                     placeholder="e.g., B.Pharm, Nursing, Direct work..." />
                 </div>
                 <div className="form-group cpform-grid-full">

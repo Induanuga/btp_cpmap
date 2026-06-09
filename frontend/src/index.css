@@ -591,7 +591,7 @@ input, textarea, select, button { font-family: inherit; }
   opacity: 0;
 }
 .career-stages-wrapper.open {
-  max-height: 2000px;
+  max-height: none;
   opacity: 1;
 }
 

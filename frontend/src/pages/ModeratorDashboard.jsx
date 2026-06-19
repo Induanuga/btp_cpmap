@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
 function StatusBadge({ status }) {
@@ -15,18 +16,13 @@ function StatusBadge({ status }) {
   );
 }
 
-function PathCard({ path, onModerate }) {
-  const [note, setNote]       = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleAction = async (status) => {
-    setLoading(true);
-    await onModerate(path._id, status, note);
-    setLoading(false);
-  };
-
+function PathCard({ path, onView }) {
   return (
-    <div className="glass-card" style={{ marginBottom: '1.25rem', padding: '1.5rem' }}>
+    <div className="glass-card" style={{ marginBottom: '1.25rem', padding: '1.5rem', cursor: 'pointer', transition: 'all 0.2s ease' }}
+      onClick={() => onView(path._id)}
+      onMouseOver={(e) => e.currentTarget.style.borderColor = 'rgba(99,102,241,0.4)'}
+      onMouseOut={(e) => e.currentTarget.style.borderColor = 'inherit'}>
+      
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
         <div>
           <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>{path.title}</h3>
@@ -37,17 +33,16 @@ function PathCard({ path, onModerate }) {
 
       {path.description && (
         <p style={{ margin: '0.75rem 0 0', fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-          {path.description}
+          {path.description.length > 120 ? path.description.substring(0, 120) + '...' : path.description}
         </p>
       )}
 
       <div style={{ marginTop: '0.75rem', fontSize: '0.8rem', color: 'var(--text-dim)', display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
         {path.submittedBy && (
-          <span>👤 Submitted by: <strong>{path.submittedBy.name}</strong> ({path.submittedBy.role})</span>
+          <span>👤 Submitted by: <strong>{path.submittedBy.name}</strong></span>
         )}
-        {path.submitterName && <span>📝 Individual: <strong>{path.submitterName}</strong></span>}
+        {path.submitterName && <span>📝 <strong>{path.submitterName}</strong></span>}
         {path.submitterBackground && <span>🌍 {path.submitterBackground}</span>}
-        {path.submitterEconomicStatus && <span>💰 {path.submitterEconomicStatus}</span>}
         <span>📅 {new Date(path.createdAt).toLocaleDateString()}</span>
       </div>
 
@@ -55,58 +50,29 @@ function PathCard({ path, onModerate }) {
         <div style={{ marginTop: '0.75rem' }}>
           <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Stages:</div>
           <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-            {path.stages.map((s, i) => (
+            {path.stages.slice(0, 5).map((s, i) => (
               <span key={i} style={{ background: 'rgba(99,102,241,0.1)', color: 'var(--primary)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '999px', padding: '2px 10px', fontSize: '0.75rem' }}>
                 {s.stageName}
               </span>
             ))}
+            {path.stages.length > 5 && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>+{path.stages.length - 5} more</span>}
           </div>
         </div>
       )}
 
-      {path.status === 'pending' && (
-        <div style={{ marginTop: '1rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
-          <div className="form-group" style={{ marginBottom: '0.75rem' }}>
-            <label className="form-label" style={{ fontSize: '0.8rem' }}>Moderation Note (optional)</label>
-            <input className="form-input" style={{ fontSize: '0.85rem' }}
-              placeholder="Reason for approval or rejection..."
-              value={note} onChange={(e) => setNote(e.target.value)} />
-          </div>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button
-              className="btn btn-sm"
-              style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.4)', fontWeight: 600 }}
-              onClick={() => handleAction('approved')}
-              disabled={loading}
-            >
-              {loading ? <span className="spinner" /> : '✅ Approve'}
-            </button>
-            <button
-              className="btn btn-sm"
-              style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.4)', fontWeight: 600 }}
-              onClick={() => handleAction('rejected')}
-              disabled={loading}
-            >
-              {loading ? <span className="spinner" /> : '❌ Reject'}
-            </button>
-          </div>
-        </div>
-      )}
+      <div style={{ marginTop: '1rem', textAlign: 'right' }}>
+        <span style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600 }}>View Details →</span>
+      </div>
     </div>
   );
 }
 
 export default function ModeratorDashboard() {
+  const navigate = useNavigate();
   const [paths, setPaths]       = useState([]);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState('');
-  const [toast, setToast]       = useState('');
   const [filter, setFilter]     = useState('pending');
-
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(''), 3000);
-  };
 
   const fetchPaths = useCallback(async () => {
     setLoading(true);
@@ -123,15 +89,8 @@ export default function ModeratorDashboard() {
 
   useEffect(() => { fetchPaths(); }, [fetchPaths]);
 
-  const handleModerate = async (id, status, note) => {
-    try {
-      await api.patch(`/career-paths/${id}/moderate`, { status, moderationNote: note });
-      showToast(`Career path ${status} successfully.`);
-      // Update local state instead of full refetch
-      setPaths((prev) => prev.map((p) => p._id === id ? { ...p, status } : p));
-    } catch (err) {
-      showToast(err.response?.data?.message || 'Action failed.');
-    }
+  const handleViewSubmission = (id) => {
+    navigate(`/submission-review/${id}`);
   };
 
   const displayed = filter === 'all' ? paths : paths.filter((p) => p.status === filter);
@@ -143,20 +102,10 @@ export default function ModeratorDashboard() {
 
   return (
     <div className="page-container" style={{ paddingBottom: '3rem' }}>
-      {toast && (
-        <div style={{
-          position: 'fixed', top: '1rem', right: '1rem', zIndex: 9999,
-          background: 'rgba(16,185,129,0.9)', color: '#fff', padding: '0.75rem 1.25rem',
-          borderRadius: 'var(--radius-sm)', fontWeight: 600, fontSize: '0.88rem',
-        }}>
-          {toast}
-        </div>
-      )}
-
       <div className="search-hero">
         <h1>🛡️ <span className="gradient-text">Moderation</span></h1>
         <p style={{ color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-          Review submitted career paths and approve or reject them for publication.
+          Review submitted career paths. Click any submission to view full details and approve or reject.
         </p>
       </div>
 
@@ -198,7 +147,7 @@ export default function ModeratorDashboard() {
         </div>
       ) : (
         displayed.map((path) => (
-          <PathCard key={path._id} path={path} onModerate={handleModerate} />
+          <PathCard key={path._id} path={path} onView={handleViewSubmission} />
         ))
       )}
     </div>

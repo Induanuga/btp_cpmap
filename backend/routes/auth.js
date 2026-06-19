@@ -16,16 +16,26 @@ const signToken = (user) =>
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, phone, password, confirmPassword, role } = req.body;
+    const {
+      name = '',
+      email = '',
+      phone = '',
+      password = '',
+      confirmPassword = '',
+      role,
+    } = req.body;
+    const normalizedName = name.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPhone = String(phone).trim();
 
     // Validation
-    if (!name || !email || !phone || !password || !confirmPassword) {
+    if (!normalizedName || !normalizedEmail || !normalizedPhone || !password || !confirmPassword) {
       return res.status(400).json({ message: 'All fields are required.' });
     }
     if (password !== confirmPassword) {
       return res.status(400).json({ message: 'Passwords do not match.' });
     }
-    if (!/^\d{10}$/.test(phone)) {
+    if (!/^\d{10}$/.test(normalizedPhone)) {
       return res.status(400).json({ message: 'Phone number must be 10 digits.' });
     }
     if (password.length < 6) {
@@ -36,13 +46,24 @@ router.post('/register', async (req, res) => {
     const assignedRole = role && VALID_ROLES.includes(role) ? role : 'user';
 
     // Check duplicate email
-    const existing = await User.findOne({ email: email.toLowerCase() });
+    const existing = await User.findOne({ email: normalizedEmail });
     if (existing) {
       return res.status(409).json({ message: 'Email already registered.' });
     }
 
+    const existingPhone = await User.findOne({ phone: normalizedPhone });
+    if (existingPhone) {
+      return res.status(409).json({ message: 'Phone number already registered.' });
+    }
+
     // Create user (password hashed via pre-save hook)
-    const user = await User.create({ name, email, phone, password, role: assignedRole });
+    const user = await User.create({
+      name: normalizedName,
+      email: normalizedEmail,
+      phone: normalizedPhone,
+      password,
+      role: assignedRole,
+    });
 
     res.status(201).json({
       message: 'Registration successful.',
@@ -50,6 +71,19 @@ router.post('/register', async (req, res) => {
     });
   } catch (err) {
     console.error('Register error:', err.message);
+    if (err.code === 11000) {
+      if (err.keyPattern?.email) {
+        return res.status(409).json({ message: 'Email already registered.' });
+      }
+      if (err.keyPattern?.phone) {
+        return res.status(409).json({ message: 'Phone number already registered.' });
+      }
+      return res.status(409).json({ message: 'User already registered.' });
+    }
+    if (err.name === 'ValidationError') {
+      const firstMessage = Object.values(err.errors)[0]?.message || 'Invalid registration data.';
+      return res.status(400).json({ message: firstMessage });
+    }
     res.status(500).json({ message: 'Server error during registration.' });
   }
 });

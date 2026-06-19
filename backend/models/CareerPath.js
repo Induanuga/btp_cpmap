@@ -68,6 +68,7 @@ const CareerPathSchema = new mongoose.Schema(
       default: null,
     },
     moderationNote: { type: String, default: '' },
+    moderatorFeedback: { type: String, default: '' },  // Detailed feedback from moderator review
     
   },
   { timestamps: true }

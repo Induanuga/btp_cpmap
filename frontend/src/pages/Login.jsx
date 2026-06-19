@@ -11,6 +11,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (location.state?.success) {
@@ -30,6 +31,10 @@ export default function Login() {
     if (!form.email) errs.email = 'Email is required.';
     if (!form.password) errs.password = 'Password is required.';
     return errs;
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   const handleSubmit = async (e) => {
@@ -98,15 +103,43 @@ export default function Login() {
 
           <div className="form-group">
             <label className="form-label">Password</label>
-            <input
-              className="form-input"
-              type="password"
-              name="password"
-              placeholder="Your password"
-              value={form.password}
-              onChange={handleChange}
-              autoComplete="current-password"
-            />
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input
+                className="form-input"
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="Your password"
+                value={form.password}
+                onChange={handleChange}
+                autoComplete="current-password"
+                style={{ paddingRight: '2.5rem' }}
+              />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
+                style={{
+                  position: 'absolute',
+                  right: '0.75rem',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--text-muted)',
+                  fontSize: '1.2rem',
+                  transition: 'color var(--transition)',
+                  borderRadius: '4px',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
             {errors.password && <span className="form-error">{errors.password}</span>}
           </div>
 

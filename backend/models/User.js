@@ -1,5 +1,10 @@
 const mongoose = require('mongoose');
+const { webcrypto } = require('crypto');
 const bcrypt = require('bcryptjs');
+
+if (!globalThis.crypto) {
+  globalThis.crypto = webcrypto;
+}
 
 const UserSchema = new mongoose.Schema(
   {

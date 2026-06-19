@@ -30,7 +30,7 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-inner">
-        <NavLink to={role === 'admin' ? '/admin' : role === 'moderator' ? '/moderator' : role === 'collector' ? '/collector' : '/search'} className="navbar-brand">
+        <NavLink to={role === 'admin' ? '/admin' : role === 'moderator' ? '/moderator-dashboard' : role === 'collector' ? '/collector' : '/search'} className="navbar-brand">
           🗺️ CPMap
         </NavLink>
 
@@ -51,14 +51,19 @@ export default function Navbar() {
 
           {/* Collector: submit paths for others */}
           {role === 'collector' && (
-            <NavLink to="/collector" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-              📋 Collector Dashboard
-            </NavLink>
+            <>
+              <NavLink to="/collector" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+                📋 Collector Dashboard
+              </NavLink>
+              <NavLink to="/my-submissions" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+                📊 My Submissions
+              </NavLink>
+            </>
           )}
 
           {/* Moderator */}
           {role === 'moderator' && (
-            <NavLink to="/moderator" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+            <NavLink to="/moderator-dashboard" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
               🛡️ Moderation
             </NavLink>
           )}

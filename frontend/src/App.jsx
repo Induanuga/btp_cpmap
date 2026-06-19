@@ -1,14 +1,16 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Register           from './pages/Register';
-import Login              from './pages/Login';
-import Search             from './pages/Search';
-import CPForm             from './pages/CPForm';
-import CollectorDashboard from './pages/CollectorDashboard';
-import ModeratorDashboard from './pages/ModeratorDashboard';
-import AdminDashboard     from './pages/AdminDashboard';
-import AdminCareerPath    from './pages/AdminCareerPath';
-import ProtectedRoute     from './components/ProtectedRoute';
-import Navbar             from './components/Navbar';
+import Register                from './pages/Register';
+import Login                   from './pages/Login';
+import Search                  from './pages/Search';
+import CPForm                  from './pages/CPForm';
+import CollectorDashboard      from './pages/CollectorDashboard';
+import MySubmissions           from './pages/MySubmissions';
+import ModeratorDashboard      from './pages/ModeratorDashboard';
+import SubmissionReviewDetail  from './pages/SubmissionReviewDetail';
+import AdminDashboard          from './pages/AdminDashboard';
+import AdminCareerPath         from './pages/AdminCareerPath';
+import ProtectedRoute          from './components/ProtectedRoute';
+import Navbar                  from './components/Navbar';
 import { isAuthenticated, getUser } from './utils/auth';
 
 function WithNavbar({ children }) {
@@ -23,8 +25,8 @@ function WithNavbar({ children }) {
 function RoleRedirect() {
   if (!isAuthenticated()) return <Navigate to="/login" replace />;
   const role = getUser()?.role;
-  if (role === 'admin')     return <Navigate to="/admin"     replace />;
-  if (role === 'moderator') return <Navigate to="/moderator" replace />;
+  if (role === 'admin')     return <Navigate to="/admin" replace />;
+  if (role === 'moderator') return <Navigate to="/moderator-dashboard" replace />;
   if (role === 'collector') return <Navigate to="/collector" replace />;
   return <Navigate to="/search" replace />;
 }
@@ -55,10 +57,24 @@ function App() {
         </ProtectedRoute>
       } />
 
+      {/* Collector: view my submissions */}
+      <Route path="/my-submissions" element={
+        <ProtectedRoute roles={['collector', 'admin']}>
+          <WithNavbar><MySubmissions /></WithNavbar>
+        </ProtectedRoute>
+      } />
+
       {/* Moderator dashboard */}
-      <Route path="/moderator" element={
+      <Route path="/moderator-dashboard" element={
         <ProtectedRoute roles={['moderator', 'admin']}>
           <WithNavbar><ModeratorDashboard /></WithNavbar>
+        </ProtectedRoute>
+      } />
+
+      {/* Moderator: view & review submission details */}
+      <Route path="/submission-review/:id" element={
+        <ProtectedRoute roles={['moderator', 'admin']}>
+          <WithNavbar><SubmissionReviewDetail /></WithNavbar>
         </ProtectedRoute>
       } />
 

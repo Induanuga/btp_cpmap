@@ -1,15 +1,28 @@
-const { pipeline, env } = require('@xenova/transformers');
-
-// Set cache directory
-env.cacheDir = './model_cache';
-
+let transformersModulePromise = null;
 let embeddingPipeline = null;
+
+/**
+ * Load the transformers ESM module from this CommonJS file.
+ */
+async function loadTransformersModule() {
+  if (!transformersModulePromise) {
+    transformersModulePromise = import('@xenova/transformers');
+  }
+
+  const { pipeline, env } = await transformersModulePromise;
+
+  // Set cache directory once the module is available.
+  env.cacheDir = './model_cache';
+
+  return { pipeline, env };
+}
 
 /**
  * Initialize the embedding model (lazy loading)
  */
 async function initializeModel() {
   if (!embeddingPipeline) {
+    const { pipeline } = await loadTransformersModule();
     console.log('Loading sentence-transformers model...');
     embeddingPipeline = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
     console.log('✓ Embedding model loaded successfully');

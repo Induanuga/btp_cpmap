@@ -141,18 +141,25 @@ router.get('/moderation-queue', protect, requireRole('moderator', 'admin'), asyn
 // PATCH /api/career-paths/:id/moderate — approve or reject a path
 router.patch('/:id/moderate', protect, requireRole('moderator', 'admin'), async (req, res) => {
   try {
-    const { status, moderationNote } = req.body;
+    const { status, moderationNote, moderatorFeedback } = req.body;
     if (!['approved', 'rejected'].includes(status)) {
       return res.status(400).json({ message: 'Status must be "approved" or "rejected".' });
     }
 
+    const updateData = {
+      status,
+      moderatedBy: req.user.id,
+      moderationNote: moderationNote || '',
+    };
+
+    // If rejecting with feedback, save it
+    if (status === 'rejected' && moderatorFeedback) {
+      updateData.moderatorFeedback = moderatorFeedback;
+    }
+
     const path = await CareerPath.findByIdAndUpdate(
       req.params.id,
-      {
-        status,
-        moderatedBy:    req.user.id,
-        moderationNote: moderationNote || '',
-      },
+      updateData,
       { new: true }
     );
 
@@ -226,6 +233,49 @@ router.delete('/admin/users/:id', protect, requireRole('admin'), async (req, res
     res.json({ message: 'User deleted.' });
   } catch (err) {
     res.status(500).json({ message: 'Server error.' });
+  }
+});
+
+// ─── GET /api/career-paths/submissions/my-submissions (collector) ──────────────
+// Fetch all submissions created by the logged-in collector with pagination
+router.get('/submissions/my-submissions', protect, requireRole('collector', 'admin'), async (req, res) => {
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const skip = (page - 1) * limit;
+
+    // Get total count
+    const totalCount = await CareerPath.countDocuments({ submittedBy: req.user.id });
+
+    // Fetch paginated submissions
+    const submissions = await CareerPath.find({ submittedBy: req.user.id })
+      .populate('moderatedBy', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    res.json({
+      count: submissions.length,
+      totalCount,
+      page,
+      totalPages,
+      limit,
+      submissions: submissions.map((sub) => ({
+        _id: sub._id,
+        title: sub.title,
+        createdAt: sub.createdAt,
+        status: sub.status,
+        moderationNote: sub.moderationNote || '',
+        moderatorFeedback: sub.moderatorFeedback || '',
+        moderatedBy: sub.moderatedBy,
+        category: sub.category,
+      })),
+    });
+  } catch (err) {
+    console.error('My submissions fetch error:', err.message);
+    res.status(500).json({ message: 'Server error fetching submissions.' });
   }
 });
 

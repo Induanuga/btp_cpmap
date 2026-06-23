@@ -223,7 +223,7 @@ export default function MySubmissions() {
           text-align: center;
           border: 2px dashed var(--border);
           border-radius: var(--radius-lg);
-          background: rgba(26, 27, 51, 0.4);
+          background: rgba(91, 82, 224, 0.03);
         }
 
         .empty-state-icon {

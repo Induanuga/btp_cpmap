@@ -23,7 +23,7 @@ function Toast({ msg }) {
   return (
     <div style={{
       position: 'fixed', top: '1rem', right: '1rem', zIndex: 9999,
-      background: 'rgba(99,102,241,0.9)', color: '#fff', padding: '0.75rem 1.25rem',
+      background: 'rgba(91,82,224,0.9)', color: '#fff', padding: '0.75rem 1.25rem',
       borderRadius: 'var(--radius-sm)', fontWeight: 600, fontSize: '0.88rem',
     }}>
       {msg}
